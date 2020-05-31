@@ -4,7 +4,6 @@ import(
     "os"
     "io/ioutil"
     "fmt"
-    "strings"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
     if HOME_PATH == "" {
         fmt.Println("You must set ENV $HOME to your home path")
         return
-    } else if os.IsNotExist(err) && strings.Contains(err.Error(), "no such file or directory") {
+    } else if os.IsNotExist(err) {
         fmt.Println("You must create a config file in $HOME/.ssh/")
         return
     }
