@@ -14,15 +14,18 @@ func main() {
 
     data, err := ioutil.ReadFile(SSH_CONFIG_PATH)
 
+
     if HOME_PATH == "" {
         fmt.Println("You must set ENV $HOME to your home path")
         return
-    } else if strings.Contains(err.Error(), "no such file or directory") {
+    } else if os.IsNotExist(err) && strings.Contains(err.Error(), "no such file or directory") {
         fmt.Println("You must create a config file in $HOME/.ssh/")
         return
     }
 
-    fmt.Println(data)
+    var SSH_CONFIG = string(data)
+
+    fmt.Println(SSH_CONFIG)
 
     if len(os.Args) == 1 {
         fmt.Println("Please enter some arguments")
