@@ -5,6 +5,8 @@ import (
     "io/ioutil"
     "os"
     "strings"
+    "log"
+    "bufio"
 )
 
 const (
@@ -14,17 +16,41 @@ const (
 var HOME_PATH = os.Getenv("HOME")
 var SSH_CONFIG_PATH = HOME_PATH + CONFIG_PATH
 
+var VALID_CONFIGS = []string{
+    "BindAddress",
+    "ForwardAgent",
+    "ForwardX11",
+    "ForwardX11Trusted",
+    "GatewayPorts",
+    "HostName",
+    "IdentityFile",
+    "IdentitiesOnly",
+    "LocalCommand",
+    "LocalForward",
+    "LogLevel",
+    "PasswordAuthentication",
+    "Port",
+    "PreferredAuthentications",
+    "Protocol",
+    "ProxyCommand",
+    "PubkeyAuthentication",
+    "RemoteForward",
+    "Tunnel",
+    "TunnelDevice",
+    "UsePrivilegedPort",
+    "User",
+    "UserKnownHostsFile",
+    "VerifyHostKeyDNS",
+    "VisualHostKey",
+    "XAuthLocation",
+}
+
 func main() {
     _, err := ioutil.ReadFile(SSH_CONFIG_PATH)
 
-    errMessage := checkValidity(err)
+    checkValidity(err)
 
-    if errMessage != "" {
-        fmt.Println(errMessage)
-        return
-    } else {
-        processStatement(os.Args)
-    }
+    processStatement(os.Args)
 }
 
 func sshConfig() string {
@@ -61,25 +87,82 @@ func mappedSsh() map[string]map[string]string {
     return sshMap
 }
 
-func checkValidity(err error) string {
+func checkValidity(err error) {
+    var errorMessage string
+
     if HOME_PATH == "" {
-        return "You must set ENV $HOME to your home path"
+        errorMessage = "You must set ENV $HOME to your home path"
     } else if os.IsNotExist(err) {
-        return "You must create a config file in $HOME/.ssh/"
+        errorMessage = "You must create a config file in $HOME/.ssh/"
+    } else if os.Args[1] == "edit" && len(os.Args) == 3 {
+        errorMessage = "You must provide changes"
     } else if len(os.Args) < 3 {
-        return "You must enter a valid statement"
-    } else {
-        return ""
+        errorMessage = "You must enter a valid statement"
     }
+
+    if errorMessage != "" {
+        log.Fatal(errorMessage)
+    }
+}
+
+func validateChange(change []string) bool {
+    if change[1] == "" {
+        log.Fatalf("Cannot set %v to blank", change[0])
+
+        return false
+    }
+
+    for _, val := range VALID_CONFIGS {
+        if change[0] == val {
+            return true
+        }
+    }
+
+    log.Fatalf("%v is not a valid configuration", change[0])
+
+    return false
+}
+
+func writeConfig(config map[string]map[string]string) {
+    file, err := os.Create(SSH_CONFIG_PATH)
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    writer := bufio.NewWriter(file)
+
+    for key, value := range config {
+        if key == "" { continue }
+
+        _, err := writer.WriteString("\nHost " + key + "\n")
+
+        if err != nil {
+            log.Fatalf("Error whilst writing to file: %s", err.Error())
+        }
+
+        for config, confValue := range value {
+            _, err := writer.WriteString("  " + config + " " + confValue + "\n")
+
+            if err != nil {
+                log.Fatalf("Error whilst writing to file: %s", err.Error())
+            }
+        }
+    }
+
+    writer.Flush()
 }
 
 func processStatement(args []string) {
     option := args[1]
     argument := args[2]
+    changes := args[3:]
 
-    if option == "show" {
+    switch option {
+    case "show":
         processShow(argument)
-        return
+    case "edit":
+        processEdit(argument, changes)
     }
 }
 
@@ -90,11 +173,30 @@ func processShow(argument string) {
     }
 
     if v, ok := mappedSsh()[argument]; ok {
-        fmt.Printf("Host\t%v\n", argument)
+        fmt.Printf("Host %v\n", argument)
 
-        for k, v := range v {
-            fmt.Printf("\t%v\t %v\n", k, v)
+        for key, val := range v {
+            fmt.Printf("  %v %v\n", key, val)
         }
     }
 }
 
+func processEdit(argument string, changes []string) {
+    splitChanges := [][]string{}
+
+    for i := 0; i < len(changes); i++ {
+        change := strings.Split(changes[i], "=")
+
+        validateChange(change)
+
+        splitChanges = append(splitChanges, change)
+    }
+
+    changedMap := mappedSsh()
+
+    for i := 0; i < len(splitChanges); i++ {
+        changedMap[argument][splitChanges[i][0]] = splitChanges[i][1]
+    }
+
+    writeConfig(changedMap)
+}
