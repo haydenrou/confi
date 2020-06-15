@@ -1,5 +1,5 @@
 # confi
-Use confi to edit your configuration files.
+Use confi to edit your SSH config
 
 ## options
 ```
