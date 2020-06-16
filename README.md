@@ -4,6 +4,9 @@ Use confi to edit your configuration files.
 ## options
 ```
 $ confi show all
-$ confi show myhost
-$ confi edit myhost HostName=127.0.0.1
+$ confi show myHost
+$ confi edit myHost HostName=127.0.0.1
+$ confi delete myHost
+$ confi add myHost HostName=127.0.0.1
+$ confi rename myHost myNewHost
 ```
