@@ -15,7 +15,7 @@ func CheckValidity() {
         errorMessage = "You must set ENV $HOME to your home path"
     } else if os.IsNotExist(err) {
         errorMessage = "You must create a config file in $HOME/.ssh/"
-    } else if os.Args[1] == "edit" && len(os.Args) == 3 {
+    } else if len(os.Args) == 3 && os.Args[1] == "edit" {
         errorMessage = "You must provide changes"
     } else if len(os.Args) < 3 {
         errorMessage = "You must enter a valid statement"
