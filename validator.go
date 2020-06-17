@@ -44,3 +44,13 @@ func ValidateChange(change []string) bool {
     return false
 }
 
+func ValidateExists(key string) bool {
+    _, ok := ConfigMap()[key]
+
+    if (!ok) {
+        log.Fatal(key + " does not exist in your config")
+        return false
+    }
+
+    return true
+}

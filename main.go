@@ -52,10 +52,11 @@ func main() {
 func processStatement() {
     args := os.Args
 
+    option := args[1]
     argument := args[2]
     changes := args[3:]
 
-    switch args[1] {
+    switch option {
     case "show":
         processShow(argument)
     case "edit":
@@ -66,6 +67,8 @@ func processStatement() {
         processDelete(argument)
     case "rename":
         processRename(argument, args[3])
+    default:
+        log.Fatal(option + " is not a valid argument")
     }
 }
 
@@ -117,11 +120,7 @@ func processAdd(argument string, changes []string) {
 func processDelete(argument string) {
     changedConfigMap := ConfigMap()
 
-    _, ok := changedConfigMap[argument]
-
-    if (!ok) {
-        log.Fatal(argument + " does not exist in your config")
-    }
+    ValidateExists(argument)
 
     delete(changedConfigMap, argument)
 
@@ -131,11 +130,7 @@ func processDelete(argument string) {
 func processRename(argument string, changedName string) {
     changedConfigMap := ConfigMap()
 
-    _, ok := changedConfigMap[argument]
-
-    if (!ok) {
-        log.Fatal(argument + " does not exist in your config")
-    }
+    ValidateExists(argument)
 
     changedConfigMap[changedName] = changedConfigMap[argument]
 
