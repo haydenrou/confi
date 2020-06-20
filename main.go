@@ -30,9 +30,12 @@ var VALID_CONFIGS = []string{
 	"Port",
 	"PreferredAuthentications",
 	"Protocol",
+	"ProxyJump",
 	"ProxyCommand",
 	"PubkeyAuthentication",
 	"RemoteForward",
+	"RemoteCommand",
+	"RequestTTY",
 	"Tunnel",
 	"TunnelDevice",
 	"UsePrivilegedPort",
@@ -89,17 +92,17 @@ func processShow(argument string) {
 }
 
 func processEdit(argument string, changes []string) {
-	changedMap := ConfigMap()
+	changedConfigMap := ConfigMap()
 
 	for i := 0; i < len(changes); i++ {
 		change := strings.Split(changes[i], "=")
 
 		ValidateChange(change)
 
-		changedMap[argument][change[0]] = change[1]
+		changedConfigMap[argument][change[0]] = change[1]
 	}
 
-	WriteConfig(changedMap)
+	changedConfigMap.writeConfig()
 }
 
 func processAdd(argument string, changes []string) {
@@ -114,7 +117,7 @@ func processAdd(argument string, changes []string) {
 		changedConfigMap[argument][change[0]] = change[1]
 	}
 
-	WriteConfig(changedConfigMap)
+	changedConfigMap.writeConfig()
 }
 
 func processDelete(argument string) {
@@ -124,7 +127,7 @@ func processDelete(argument string) {
 
 	delete(changedConfigMap, argument)
 
-	WriteConfig(changedConfigMap)
+	changedConfigMap.writeConfig()
 }
 
 func processRename(argument string, changedName string) {
@@ -136,5 +139,5 @@ func processRename(argument string, changedName string) {
 
 	delete(changedConfigMap, argument)
 
-	WriteConfig(changedConfigMap)
+	changedConfigMap.writeConfig()
 }
